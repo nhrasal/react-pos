@@ -22,7 +22,7 @@ export interface IAddedProducts {
   name: string;
   price: number;
   image: string;
-  qty?: number;
+  qty: number;
 }
 
 const data: IProducts[] = [
