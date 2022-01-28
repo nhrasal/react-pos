@@ -1,27 +1,36 @@
 import React, { useEffect, useState } from "react";
-import { Card, Col, Container, Image, Row, Table } from "react-bootstrap";
-import { IAddedProducts, IProducts } from "../@fake-db/Products";
-import { ProductService } from "../@services/products.service";
-import { BsFileX, BsPlusCircleFill, BsTrash } from "react-icons/bs";
-import { FaComment } from "react-icons/fa";
+import { Card, Col, Container, Row } from "react-bootstrap";
+import { AiFillEye, AiOutlineLeft, AiOutlineRight } from "react-icons/ai";
 import { BiEdit } from "react-icons/bi";
+import { BsPlusCircleFill } from "react-icons/bs";
 import { FaRegMoneyBillAlt } from "react-icons/fa";
-import { AiFillEye, AiOutlineLeft } from "react-icons/ai";
-import { AiOutlineRight } from "react-icons/ai";
 import { IoMdCreate } from "react-icons/io";
-import Button from "@restart/ui/esm/Button";
+import { CustomModal } from "../@components/CustomModal";
+import { OrderPreviewTable } from "../@components/OrderPreviewTable";
+import { OrderTable } from "../@components/OrderTable";
+import { ProductThumb } from "../@components/ProductThumb";
 import { Toastr } from "../@components/toastr";
+import { ICustomer } from "../@fake-db/Customers";
+import { IAddedProducts, IProducts } from "../@fake-db/Products";
+import { CustomerService } from "../@services/customers.service";
+import { ProductService } from "../@services/products.service";
 
 export const Home = () => {
-  const [toastShow, setToastShow] = useState(true);
-  const [products, setProducts] = useState([]);
+  const [toastShow, setToastShow] = useState(false);
+  const [modalShow, setModalShow] = useState<boolean>(true);
+  const [toastMsg, setToastMsg] = useState("");
+  const [toastVariant, setToastVariant] = useState("success");
+  const [products, setProducts] = useState<IProducts[]>([]);
+  const [searchProducts, setSearchProducts] = useState<IProducts[]>([]);
+  const [customers, setCustomers] = useState<ICustomer[]>([]);
+  const [selectedCustomer, setSelectedCustomer] = useState<ICustomer>();
   const [addedProducts, setAddedProducts] = useState<IAddedProducts[]>([]);
   const [total, setTotal] = useState(0);
   const [totalItem, setTotalItem] = useState(0);
-  const [dcTotalItem, setDcTotalItem] = useState(0.0);
 
   useEffect(() => {
     getProducts();
+    getCustomers();
   }, []);
 
   useEffect(() => {
@@ -29,11 +38,16 @@ export const Home = () => {
   }, [addedProducts]);
 
   const getProducts = () => {
-    ProductService.getProducts().subscribe((res: any) => {
+    ProductService.getAll().subscribe((res: any) => {
       setProducts(res.data);
     });
   };
 
+  const getCustomers = () => {
+    CustomerService.getAll().subscribe((res: any) => {
+      setCustomers(res.data);
+    });
+  };
   const addToProduct = (product: IProducts, qty?: number) => {
     const findProduct: IProducts | any = addedProducts.find(
       (item: IAddedProducts) => item.id === product.id
@@ -53,11 +67,15 @@ export const Home = () => {
     }
     setAddedProducts(newProduct);
   };
+
   const removeItem = (product: IProducts) => {
     const newProducts = addedProducts.filter(
       (item: IAddedProducts) => item.id !== product.id
     );
     setAddedProducts(newProducts);
+    setToastVariant("danger");
+    setToastMsg(product.name + " removed from oder table");
+    setToastShow(true);
   };
 
   const getTotal = () => {
@@ -81,6 +99,47 @@ export const Home = () => {
     addToProduct(product, event.target.value);
   };
 
+  const onChangeCustomer = (customerId: any) => {
+    const findCustomer = customers.find(
+      (item: any) => +item.id === +customerId
+    );
+
+    if (findCustomer) {
+      setSelectedCustomer(findCustomer);
+      return;
+    }
+  };
+
+  const onProductFilter = (productDetails: string) => {
+    if (productDetails) {
+      const filter = products.filter((item: IProducts) =>
+        item.name.toLowerCase().includes(productDetails)
+      );
+      setSearchProducts(filter);
+      return;
+    }
+    setSearchProducts([]);
+  };
+
+  const onCancel = () => {
+    setAddedProducts([]);
+    setToastVariant("danger");
+    setToastMsg("Order Canceled");
+    setToastShow(true);
+  };
+
+  const onOrder = () => {
+    if (addedProducts.length) {
+      setModalShow(true)
+      setToastVariant("success");
+      setToastMsg("Order Successful");
+    } else {
+      setToastVariant("info");
+      setToastMsg("No products added");
+    }
+    setToastShow(true);
+  };
+
   return (
     <Container fluid>
       <Row>
@@ -91,11 +150,21 @@ export const Home = () => {
           className="shadow-lg p-1  bg-white rounded text-center "
         >
           <div className="input-group mb-3">
-            <select className="form-select" aria-label="Default select example">
-              <option selected>Open this select menu</option>
-              <option value="1">One</option>
-              <option value="2">Two</option>
-              <option value="3">Three</option>
+            <select
+              className="form-select"
+              aria-label="Default select customer"
+              onChange={(e) => onChangeCustomer(e.target.value)}
+            >
+              <option>Select Customer</option>
+              {customers.length
+                ? customers.map((customer: ICustomer, index: number) => {
+                    return (
+                      <option value={customer.id} key={index}>
+                        {customer.name}
+                      </option>
+                    );
+                  })
+                : ""}
             </select>
             <span className="input-group-text">
               <IoMdCreate />
@@ -109,7 +178,7 @@ export const Home = () => {
           </div>
           <div className="input-group mb-3">
             <select className="form-select" aria-label="Default select example">
-              <option selected>Open this select menu</option>
+              <option value="0">Select Were House</option>
               <option value="1">One</option>
               <option value="2">Two</option>
               <option value="3">Three</option>
@@ -119,65 +188,39 @@ export const Home = () => {
             <input
               type="text"
               className="form-control"
-              placeholder="Username"
-              aria-label="Username"
+              placeholder="Search product by name"
+              aria-label="Search product by name"
+              onChange={(e) => onProductFilter(e.target.value)}
             />
             <span className="input-group-text">
               <BsPlusCircleFill />
             </span>
           </div>
+          {searchProducts.length ? (
+            <ul>
+              {searchProducts.map((item: IProducts, index: number) => {
+                return (
+                  <li key={index}>
+                    {item.name}{" "}
+                    <button
+                      onClick={() => addToProduct(item)}
+                      className="btn btn-sm btn-outline-success"
+                    >
+                      <BsPlusCircleFill />
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            ""
+          )}
           <Card className="bg-white">
-            <Table striped bordered hover>
-              <thead className="bg-primary">
-                <tr>
-                  <th>Product Name</th>
-                  <th>Price</th>
-                  <th>Qty</th>
-                  <th>Sub Total</th>
-                  <th>
-                    <BsTrash />
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {addedProducts.length ? (
-                  addedProducts.map((product: any, index: any) => {
-                    if (product.isAvailable) {
-                      return (
-                        <tr key={index}>
-                          <td>
-                            {product.name} <FaComment /> <BiEdit />
-                          </td>
-                          <td>{product.price}</td>
-                          <td>
-                            <input
-                              type="number"
-                              value={product.qty}
-                              onChange={(e) => onChangeQty(e, product)}
-                              style={{ width: "50px" }}
-                              min={1}
-                            />
-                          </td>
-                          <td>{product.price * product.qty}</td>
-                          <td>
-                            <Button
-                              className="btn btn-sm btn-outline-danger"
-                              onClick={() => removeItem(product)}
-                            >
-                              <BsTrash />
-                            </Button>
-                          </td>
-                        </tr>
-                      );
-                    }
-                  })
-                ) : (
-                  <tr>
-                    <td colSpan={5}> No Products selected</td>
-                  </tr>
-                )}
-              </tbody>
-            </Table>
+            <OrderTable
+              addedProducts={addedProducts}
+              onChangeQty={onChangeQty}
+              removeItem={removeItem}
+            />
           </Card>
           <div style={{ bottom: 0 }} className="mt-5">
             <div
@@ -217,26 +260,31 @@ export const Home = () => {
                 <tr>
                   <td className="bg-warning">
                     <button className="btn btn-warning w-100 text-light">
-                      {" "}
                       Suspend
                     </button>
                   </td>
                   <td className="bg-info">
-                    <button className="btn btn-info w-100 text-light">
-                      {" "}
+                    <button
+                      className="btn btn-info w-100 text-light"
+                      onClick={() => onOrder()}
+                    >
                       Order
                     </button>
                   </td>
                   <td rowSpan={2} className="bg-success">
                     <button className="btn btn-success w-100">
-                      {" "}
                       <FaRegMoneyBillAlt /> Payment
                     </button>
                   </td>
                 </tr>
                 <tr>
                   <td className="bg-danger">
-                    <button className="btn btn-danger w-100"> Cancel</button>
+                    <button
+                      className="btn btn-danger w-100"
+                      onClick={() => onCancel()}
+                    >
+                      Cancel
+                    </button>
                   </td>
                   <td className="bg-primary">
                     <button className="btn btn-primary w-100"> Bill</button>
@@ -257,17 +305,7 @@ export const Home = () => {
                   key={index}
                   onClick={() => addToProduct(product)}
                 >
-                  <div
-                    className="shadow p-3 mb-2 bg-white rounded text-center"
-                    style={{ height: "200px" }}
-                  >
-                    <Image
-                      src={product.image}
-                      thumbnail
-                      style={{ height: "130px", width: "130px" }}
-                    />
-                    <p>{product.name}</p>
-                  </div>
+                  <ProductThumb product={product} />
                 </Col>
               );
             })}
@@ -287,8 +325,20 @@ export const Home = () => {
         </Col>
       </Row>
 
-      {/* {toastShow ? <Toastr show={toastShow} setShow={setToastShow} msg={"test msg"}/> : ""}
-      <Button onClick={() => setToastShow(true)}>Show Toast</Button> */}
+      <Toastr
+        show={toastShow}
+        setShow={setToastShow}
+        msg={toastMsg}
+        variant={toastVariant}
+      />
+      <CustomModal setShow={setModalShow} show={modalShow}>
+        <div>
+          <div>customer information</div>
+          <OrderPreviewTable
+            addedProducts={addedProducts}
+          />
+        </div>
+      </CustomModal>
     </Container>
   );
 };
