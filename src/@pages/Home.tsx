@@ -325,7 +325,7 @@ export const Home = () => {
                       className="btn btn-success w-100"
                       onClick={() => onPreview()}
                     >
-                      <IoMdCreate /> Preview
+                       <AiFillEye /> Preview
                     </button>
                   </td>
                   <td className="bg-danger">
