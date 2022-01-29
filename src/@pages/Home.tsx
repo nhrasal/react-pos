@@ -165,7 +165,6 @@ export const Home = () => {
     setToastVariant("success");
     setToastMsg("The Order is Saved Successfully");
     setToastShow(true);
-    setModalShow(true);
   };
 const onPreview=()=>{
   if (!orderValidation()) return;
