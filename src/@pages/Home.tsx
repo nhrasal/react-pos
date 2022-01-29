@@ -63,14 +63,14 @@ export const Home = () => {
       (item: IAddedProducts) => item.id === product.id
     );
 
-    let newProduct = [];
+    let newProduct: any = [];
 
     if (findProduct) {
-      findProduct.qty = qty || ++findProduct.qty;
-      const oldProducts = addedProducts.filter(
-        (item: IAddedProducts) => item.id !== product.id
-      );
-      newProduct = [...oldProducts, findProduct];
+      let updateQty = ++findProduct.qty;
+      addedProducts.forEach((item: IAddedProducts) => {
+        if (item.id === product.id) item.qty = updateQty;
+        newProduct.push(item);
+      });
     } else {
       product.qty = 1;
       newProduct = [...addedProducts, product];
@@ -137,6 +137,7 @@ export const Home = () => {
   // order cancel
   const onCancel = () => {
     setAddedProducts([]);
+    setSelectedCustomer({});
     setToastVariant("danger");
     setToastMsg("Order Canceled");
     setToastShow(true);
@@ -166,10 +167,10 @@ export const Home = () => {
     setToastMsg("The Order is Saved Successfully");
     setToastShow(true);
   };
-const onPreview=()=>{
-  if (!orderValidation()) return;
+  const onPreview = () => {
+    if (!orderValidation()) return;
     setModalShow(true);
-}
+  };
   return (
     <Container fluid>
       {preloader ? (
@@ -319,9 +320,12 @@ const onPreview=()=>{
                   </td>
                 </tr>
                 <tr>
-                <td className="bg-success">
-                    <button className="btn btn-success w-100" onClick={()=>onPreview()}> 
-                    <IoMdCreate /> Preview
+                  <td className="bg-success">
+                    <button
+                      className="btn btn-success w-100"
+                      onClick={() => onPreview()}
+                    >
+                      <IoMdCreate /> Preview
                     </button>
                   </td>
                   <td className="bg-danger">
