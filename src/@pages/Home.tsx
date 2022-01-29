@@ -66,7 +66,7 @@ export const Home = () => {
     let newProduct: any = [];
 
     if (findProduct) {
-      let updateQty = ++findProduct.qty;
+      let updateQty = qty || ++findProduct.qty;
       addedProducts.forEach((item: IAddedProducts) => {
         if (item.id === product.id) item.qty = updateQty;
         newProduct.push(item);
