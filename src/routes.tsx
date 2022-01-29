@@ -1,7 +1,6 @@
 import React, { Suspense, useEffect } from "react";
 import { Route, Routes } from "react-router-dom";
 import Layout from "./@pages/Layouts/Layout";
-import NotFound from "./@pages/NotFound";
 import RouterList, { IRouterList } from "./routeList";
 
 export const Router = () => {

@@ -1,11 +1,11 @@
 import React from "react";
-import { Col, Container, Row } from "react-bootstrap";
+import { Container } from "react-bootstrap";
 
 const Layout = ({ children }: any) => {
   return (
     <Container fluid>
       <div className="shadow p-3 mb-2 bg-white rounded text-center">
-        Welcome to new app
+       <h4> Welcome to simple POS System</h4>
       </div>
       {children}
     </Container>

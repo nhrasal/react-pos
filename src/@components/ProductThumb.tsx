@@ -1,6 +1,5 @@
 import React from "react";
 import { Image } from "react-bootstrap";
-import { IProducts } from "../@fake-db/Products";
 
 export const ProductThumb = ({ product }:any) => {
   return (

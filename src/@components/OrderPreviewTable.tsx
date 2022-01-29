@@ -1,9 +1,5 @@
-import { Method } from "@testing-library/react";
 import React from "react";
-import { Button, Table } from "react-bootstrap";
-import { BiEdit } from "react-icons/bi";
-import { BsTrash } from "react-icons/bs";
-import { FaComment } from "react-icons/fa";
+import { Table } from "react-bootstrap";
 import { IAddedProducts } from "../@fake-db/Products";
 interface IOrderTable {
   addedProducts: IAddedProducts[];
@@ -11,8 +7,8 @@ interface IOrderTable {
 
 export const OrderPreviewTable = ({ addedProducts }: IOrderTable) => {
   return (
-    <Table striped bordered hover>
-      <thead className="bg-primary">
+    <Table hover>
+      <thead>
         <tr>
           <th>Product Name</th>
           <th>Price</th>
@@ -23,18 +19,14 @@ export const OrderPreviewTable = ({ addedProducts }: IOrderTable) => {
       <tbody>
         {addedProducts.length ? (
           addedProducts.map((product: any, index: any) => {
-            if (product.isAvailable) {
-              return (
-                <tr key={index}>
-                  <td>
-                    {product.name} <FaComment /> <BiEdit />
-                  </td>
-                  <td>{product.price}</td>
-                  <td>{product.qty}</td>
-                  <td>{product.price * product.qty}</td>
-                </tr>
-              );
-            }
+            return (
+              <tr key={index}>
+                <td>{product.name}</td>
+                <td>{product.price}</td>
+                <td>{product.qty}</td>
+                <td>{product.price * product.qty}</td>
+              </tr>
+            );
           })
         ) : (
           <tr>

@@ -1,12 +1,13 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import React, { useEffect, useState } from "react";
-import { Card, Col, Container, Row } from "react-bootstrap";
+import { Card, Col, Container, Row, Spinner } from "react-bootstrap";
 import { AiFillEye, AiOutlineLeft, AiOutlineRight } from "react-icons/ai";
 import { BiEdit } from "react-icons/bi";
 import { BsPlusCircleFill } from "react-icons/bs";
 import { FaRegMoneyBillAlt } from "react-icons/fa";
 import { IoMdCreate } from "react-icons/io";
 import { CustomModal } from "../@components/CustomModal";
-import { OrderPreviewTable } from "../@components/OrderPreviewTable";
+import { OrderDetails } from "../@components/OrderDetails";
 import { OrderTable } from "../@components/OrderTable";
 import { ProductThumb } from "../@components/ProductThumb";
 import { Toastr } from "../@components/toastr";
@@ -17,13 +18,14 @@ import { ProductService } from "../@services/products.service";
 
 export const Home = () => {
   const [toastShow, setToastShow] = useState(false);
-  const [modalShow, setModalShow] = useState<boolean>(true);
+  const [modalShow, setModalShow] = useState<boolean>(false);
+  const [preloader, setPreloader] = useState<boolean>(false);
   const [toastMsg, setToastMsg] = useState("");
   const [toastVariant, setToastVariant] = useState("success");
   const [products, setProducts] = useState<IProducts[]>([]);
   const [searchProducts, setSearchProducts] = useState<IProducts[]>([]);
   const [customers, setCustomers] = useState<ICustomer[]>([]);
-  const [selectedCustomer, setSelectedCustomer] = useState<ICustomer>();
+  const [selectedCustomer, setSelectedCustomer] = useState<ICustomer | any>();
   const [addedProducts, setAddedProducts] = useState<IAddedProducts[]>([]);
   const [total, setTotal] = useState(0);
   const [totalItem, setTotalItem] = useState(0);
@@ -37,18 +39,26 @@ export const Home = () => {
     getTotal();
   }, [addedProducts]);
 
+  // Get all products
   const getProducts = () => {
     ProductService.getAll().subscribe((res: any) => {
       setProducts(res.data);
     });
   };
 
+  // get All customers
   const getCustomers = () => {
     CustomerService.getAll().subscribe((res: any) => {
       setCustomers(res.data);
     });
   };
+  // add to the product order list
   const addToProduct = (product: IProducts, qty?: number) => {
+    setPreloader(true);
+    setTimeout(() => {
+      setPreloader(false);
+    }, 1000);
+
     const findProduct: IProducts | any = addedProducts.find(
       (item: IAddedProducts) => item.id === product.id
     );
@@ -68,6 +78,7 @@ export const Home = () => {
     setAddedProducts(newProduct);
   };
 
+  // remove from the product order list
   const removeItem = (product: IProducts) => {
     const newProducts = addedProducts.filter(
       (item: IAddedProducts) => item.id !== product.id
@@ -77,7 +88,7 @@ export const Home = () => {
     setToastMsg(product.name + " removed from oder table");
     setToastShow(true);
   };
-
+  //   get order total
   const getTotal = () => {
     let totalPrice = 0;
     let totalQty = 0;
@@ -91,7 +102,7 @@ export const Home = () => {
     setTotalItem(totalQty);
     setTotal(totalPrice);
   };
-
+  //  order product quantity  update
   const onChangeQty = (event: any, product: any) => {
     if (event.target.value < 1) {
       return;
@@ -99,6 +110,7 @@ export const Home = () => {
     addToProduct(product, event.target.value);
   };
 
+  // customer change
   const onChangeCustomer = (customerId: any) => {
     const findCustomer = customers.find(
       (item: any) => +item.id === +customerId
@@ -110,10 +122,11 @@ export const Home = () => {
     }
   };
 
-  const onProductFilter = (productDetails: string) => {
-    if (productDetails) {
+  // product filter
+  const onProductFilter = (productName: string) => {
+    if (productName) {
       const filter = products.filter((item: IProducts) =>
-        item.name.toLowerCase().includes(productDetails)
+        item.name.toLowerCase().includes(productName)
       );
       setSearchProducts(filter);
       return;
@@ -121,6 +134,7 @@ export const Home = () => {
     setSearchProducts([]);
   };
 
+  // order cancel
   const onCancel = () => {
     setAddedProducts([]);
     setToastVariant("danger");
@@ -128,20 +142,48 @@ export const Home = () => {
     setToastShow(true);
   };
 
-  const onOrder = () => {
-    if (addedProducts.length) {
-      setModalShow(true)
-      setToastVariant("success");
-      setToastMsg("Order Successful");
-    } else {
+  const orderValidation = () => {
+    if (!selectedCustomer) {
+      setToastVariant("info");
+      setToastMsg("Please select a valid customer");
+      setToastShow(true);
+      return false;
+    }
+
+    if (!addedProducts.length) {
       setToastVariant("info");
       setToastMsg("No products added");
+      setToastShow(true);
+      return false;
     }
-    setToastShow(true);
+    return true;
   };
 
+  // order submit
+  const onOrder = () => {
+    if (!orderValidation()) return;
+    setToastVariant("success");
+    setToastMsg("The Order is Saved Successfully");
+    setToastShow(true);
+    setModalShow(true);
+  };
+const onPreview=()=>{
+  if (!orderValidation()) return;
+    setModalShow(true);
+}
   return (
     <Container fluid>
+      {preloader ? (
+        <div className="vertical-center">
+          <Spinner
+            animation="grow"
+            style={{ height: "80px", width: "80px" }}
+            className="text-primary"
+          />
+        </div>
+      ) : (
+        ""
+      )}
       <Row>
         <Col
           md={5}
@@ -271,13 +313,18 @@ export const Home = () => {
                       Order
                     </button>
                   </td>
-                  <td rowSpan={2} className="bg-success">
+                  <td className="bg-success">
                     <button className="btn btn-success w-100">
                       <FaRegMoneyBillAlt /> Payment
                     </button>
                   </td>
                 </tr>
                 <tr>
+                <td className="bg-success">
+                    <button className="btn btn-success w-100" onClick={()=>onPreview()}> 
+                    <IoMdCreate /> Preview
+                    </button>
+                  </td>
                   <td className="bg-danger">
                     <button
                       className="btn btn-danger w-100"
@@ -294,7 +341,7 @@ export const Home = () => {
             </table>
           </div>
         </Col>
-        <Col md={7} sm={12} xs={12}>
+        <Col md={7} sm={12} xs={12} style={{ opacity: preloader ? ".5" : "" }}>
           <Row className="justify-content-center">
             {products.map((product: IProducts, index: number) => {
               return (
@@ -304,6 +351,7 @@ export const Home = () => {
                   xs={12}
                   key={index}
                   onClick={() => addToProduct(product)}
+                  className="btn"
                 >
                   <ProductThumb product={product} />
                 </Col>
@@ -314,13 +362,25 @@ export const Home = () => {
             style={{ display: "flex", justifyContent: "space-between" }}
             className="bg-primary  mb-2"
           >
-            <button className="btn btn-sm text-light">
-              <AiOutlineLeft />
-            </button>
-            <button className="btn w-100 text-light">Sell Gift Card</button>
-            <button className="btn btn-sm text-light">
-              <AiOutlineRight />
-            </button>
+            <div style={{ width: "100px", background: "#f3f3f359" }}>
+              <button className="btn btn-sm text-light">
+                <AiOutlineLeft />
+              </button>
+            </div>
+            <div>
+              <button className="btn w-100 text-light">Sell Gift Card</button>
+            </div>
+            <div
+              style={{
+                width: "100px",
+                background: "#f3f3f359",
+                textAlign: "end",
+              }}
+            >
+              <button className="btn btn-sm text-light">
+                <AiOutlineRight />
+              </button>
+            </div>
           </div>
         </Col>
       </Row>
@@ -331,13 +391,17 @@ export const Home = () => {
         msg={toastMsg}
         variant={toastVariant}
       />
-      <CustomModal setShow={setModalShow} show={modalShow}>
-        <div>
-          <div>customer information</div>
-          <OrderPreviewTable
-            addedProducts={addedProducts}
-          />
-        </div>
+      <CustomModal
+        setShow={setModalShow}
+        show={modalShow}
+        title="Order Details"
+      >
+        <OrderDetails
+          customerInfo={selectedCustomer}
+          addedProducts={addedProducts}
+          orderTotal={total}
+          totalItem={totalItem}
+        />
       </CustomModal>
     </Container>
   );
