@@ -1,5 +1,4 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import Overlay from "@restart/ui/esm/Overlay";
 import React, { useEffect, useRef, useState } from "react";
 import {
   Card,
@@ -8,7 +7,7 @@ import {
   OverlayTrigger,
   Row,
   Spinner,
-  Tooltip,
+  Tooltip
 } from "react-bootstrap";
 import { AiFillEye, AiOutlineLeft, AiOutlineRight } from "react-icons/ai";
 import { BiEdit } from "react-icons/bi";
