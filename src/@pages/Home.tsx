@@ -1,6 +1,15 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import React, { useEffect, useState } from "react";
-import { Card, Col, Container, Row, Spinner } from "react-bootstrap";
+import Overlay from "@restart/ui/esm/Overlay";
+import React, { useEffect, useRef, useState } from "react";
+import {
+  Card,
+  Col,
+  Container,
+  OverlayTrigger,
+  Row,
+  Spinner,
+  Tooltip,
+} from "react-bootstrap";
 import { AiFillEye, AiOutlineLeft, AiOutlineRight } from "react-icons/ai";
 import { BiEdit } from "react-icons/bi";
 import { BsPlusCircleFill } from "react-icons/bs";
@@ -30,6 +39,8 @@ export const Home = () => {
   const [total, setTotal] = useState(0);
   const [totalItem, setTotalItem] = useState(0);
 
+  const inputRef: any = useRef(null);
+
   useEffect(() => {
     getProducts();
     getCustomers();
@@ -37,6 +48,7 @@ export const Home = () => {
 
   useEffect(() => {
     getTotal();
+    inputRef.current.focus();
   }, [addedProducts]);
 
   // Get all products
@@ -227,13 +239,19 @@ export const Home = () => {
             </select>
           </div>
           <div className="input-group mb-3">
-            <input
-              type="text"
-              className="form-control"
-              placeholder="Search product by name"
-              aria-label="Search product by name"
-              onChange={(e) => onProductFilter(e.target.value)}
-            />
+            <OverlayTrigger
+              placement="top"
+              overlay={<Tooltip id="tooltip-top">Search product by name</Tooltip>}
+            >
+              <input
+                type="text"
+                className="form-control"
+                placeholder="Search product by name"
+                aria-label="Search product by name"
+                onChange={(e) => onProductFilter(e.target.value)}
+                ref={inputRef}
+              />
+            </OverlayTrigger>
             <span className="input-group-text">
               <BsPlusCircleFill />
             </span>
@@ -325,7 +343,7 @@ export const Home = () => {
                       className="btn btn-success w-100"
                       onClick={() => onPreview()}
                     >
-                       <AiFillEye /> Preview
+                      <AiFillEye /> Preview
                     </button>
                   </td>
                   <td className="bg-danger">
