@@ -40,6 +40,7 @@ export const Home = () => {
   const [totalItem, setTotalItem] = useState(0);
 
   const inputRef: any = useRef(null);
+  const customerRef: any = useRef(null);
 
   useEffect(() => {
     getProducts();
@@ -157,7 +158,8 @@ export const Home = () => {
 
   const orderValidation = () => {
     if (!selectedCustomer) {
-      setToastVariant("info");
+      customerRef.current.focus();
+      setToastVariant("danger");
       setToastMsg("Please select a valid customer");
       setToastShow(true);
       return false;
@@ -208,6 +210,7 @@ export const Home = () => {
               className="form-select"
               aria-label="Default select customer"
               onChange={(e) => onChangeCustomer(e.target.value)}
+              ref={customerRef}
             >
               <option>Select Customer</option>
               {customers.length
